@@ -1,7 +1,9 @@
 import sys
+import os
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QLabel, QLineEdit, QTextEdit,
-    QPushButton, QVBoxLayout, QHBoxLayout, QComboBox, QMessageBox
+    QPushButton, QVBoxLayout, QHBoxLayout, QComboBox,
+    QMessageBox, QFileDialog
 )
 
 
@@ -20,19 +22,19 @@ def caesar_cipher(text, shift, mode='encrypt'):
 class CaesarCipherApp(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Caesar Cipher GUI - PyQt5")
-        self.setGeometry(100, 100, 500, 400)
+        self.setWindowTitle("Caesar Cipher GUI with File Support")
+        self.setGeometry(100, 100, 600, 500)
         self.init_ui()
 
     def init_ui(self):
         layout = QVBoxLayout()
 
-        # Input text
-        layout.addWidget(QLabel("Enter your message:"))
+        # Input text area
+        layout.addWidget(QLabel("Enter or paste your message:"))
         self.input_text = QTextEdit()
         layout.addWidget(self.input_text)
 
-        # Shift and mode
+        # Shift and mode selection
         shift_layout = QHBoxLayout()
         shift_layout.addWidget(QLabel("Shift:"))
         self.shift_input = QLineEdit("3")
@@ -43,18 +45,31 @@ class CaesarCipherApp(QWidget):
         self.mode_selector = QComboBox()
         self.mode_selector.addItems(["encrypt", "decrypt"])
         shift_layout.addWidget(self.mode_selector)
+
         layout.addLayout(shift_layout)
 
-        # Output
+        # Result text area
         layout.addWidget(QLabel("Result:"))
         self.result_box = QTextEdit()
         self.result_box.setReadOnly(True)
         layout.addWidget(self.result_box)
 
-        # Button
-        self.run_button = QPushButton("Run Caesar Cipher")
-        self.run_button.clicked.connect(self.process_cipher)
-        layout.addWidget(self.run_button)
+        # Buttons
+        button_layout = QHBoxLayout()
+
+        run_button = QPushButton("Run Cipher")
+        run_button.clicked.connect(self.process_cipher)
+        button_layout.addWidget(run_button)
+
+        load_file_button = QPushButton("Load File")
+        load_file_button.clicked.connect(self.load_file)
+        button_layout.addWidget(load_file_button)
+
+        save_file_button = QPushButton("Save Result to File")
+        save_file_button.clicked.connect(self.save_file)
+        button_layout.addWidget(save_file_button)
+
+        layout.addLayout(button_layout)
 
         self.setLayout(layout)
 
@@ -64,11 +79,40 @@ class CaesarCipherApp(QWidget):
             shift = int(self.shift_input.text())
             mode = self.mode_selector.currentText()
 
+            if not text.strip():
+                QMessageBox.warning(self, "Warning", "Message is empty.")
+                return
+
             result = caesar_cipher(text, shift, mode)
             self.result_box.setText(result)
 
         except ValueError:
-            QMessageBox.warning(self, "Invalid Input", "Please enter a valid integer shift value.")
+            QMessageBox.warning(self, "Error", "Shift must be an integer.")
+
+    def load_file(self):
+        file_path, _ = QFileDialog.getOpenFileName(self, "Open Text File", "", "Text Files (*.txt)")
+        if file_path:
+            try:
+                with open(file_path, 'r', encoding='utf-8') as file:
+                    content = file.read()
+                    self.input_text.setText(content)
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to read file:\n{e}")
+
+    def save_file(self):
+        result = self.result_box.toPlainText()
+        if not result:
+            QMessageBox.warning(self, "Warning", "No result to save.")
+            return
+
+        file_path, _ = QFileDialog.getSaveFileName(self, "Save Result", "", "Text Files (*.txt)")
+        if file_path:
+            try:
+                with open(file_path, 'w', encoding='utf-8') as file:
+                    file.write(result)
+                QMessageBox.information(self, "Success", "Result saved successfully.")
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to save file:\n{e}")
 
 
 if __name__ == "__main__":
