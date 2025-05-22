@@ -1,0 +1,78 @@
+import sys
+from PyQt5.QtWidgets import (
+    QApplication, QWidget, QLabel, QLineEdit, QTextEdit,
+    QPushButton, QVBoxLayout, QHBoxLayout, QComboBox, QMessageBox
+)
+
+
+def caesar_cipher(text, shift, mode='encrypt'):
+    result = ""
+    for char in text:
+        if char.isalpha():
+            base = ord('A') if char.isupper() else ord('a')
+            shift_amount = shift if mode == 'encrypt' else -shift
+            result += chr((ord(char) - base + shift_amount) % 26 + base)
+        else:
+            result += char
+    return result
+
+
+class CaesarCipherApp(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Caesar Cipher GUI - PyQt5")
+        self.setGeometry(100, 100, 500, 400)
+        self.init_ui()
+
+    def init_ui(self):
+        layout = QVBoxLayout()
+
+        # Input text
+        layout.addWidget(QLabel("Enter your message:"))
+        self.input_text = QTextEdit()
+        layout.addWidget(self.input_text)
+
+        # Shift and mode
+        shift_layout = QHBoxLayout()
+        shift_layout.addWidget(QLabel("Shift:"))
+        self.shift_input = QLineEdit("3")
+        self.shift_input.setFixedWidth(50)
+        shift_layout.addWidget(self.shift_input)
+
+        shift_layout.addWidget(QLabel("Mode:"))
+        self.mode_selector = QComboBox()
+        self.mode_selector.addItems(["encrypt", "decrypt"])
+        shift_layout.addWidget(self.mode_selector)
+        layout.addLayout(shift_layout)
+
+        # Output
+        layout.addWidget(QLabel("Result:"))
+        self.result_box = QTextEdit()
+        self.result_box.setReadOnly(True)
+        layout.addWidget(self.result_box)
+
+        # Button
+        self.run_button = QPushButton("Run Caesar Cipher")
+        self.run_button.clicked.connect(self.process_cipher)
+        layout.addWidget(self.run_button)
+
+        self.setLayout(layout)
+
+    def process_cipher(self):
+        try:
+            text = self.input_text.toPlainText()
+            shift = int(self.shift_input.text())
+            mode = self.mode_selector.currentText()
+
+            result = caesar_cipher(text, shift, mode)
+            self.result_box.setText(result)
+
+        except ValueError:
+            QMessageBox.warning(self, "Invalid Input", "Please enter a valid integer shift value.")
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = CaesarCipherApp()
+    window.show()
+    sys.exit(app.exec_())
